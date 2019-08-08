@@ -27,7 +27,7 @@ from oauth2client import client
 app = Flask(__name__)
 
 # Connect to Database and create database session
-engine = create_engine('sqlite:///catalog.db')
+engine = create_engine('sqlite:///catalog.db?check_same_thread=False')
 Base.metadata.bind = engine
 
 DBSession = sessionmaker(bind=engine)
@@ -85,7 +85,7 @@ def getUserID(email):
 
 
 def Is_Authenticated():
-    if 'user_id' in login_session:
+    if 'user' in login_session:
         return True
     return False
     # return ('user' in login_session)
@@ -118,11 +118,16 @@ def gconnect():
                     raise ValueError('Wrong issuer.')
 
                 # Retrive user's Google Account ID from the decoded token.
-                userid = idinfo['sub']
-                login_session['user_id'] = userid
+                # userid = idinfo['sub']
+                login_session['user_id'] = idinfo['sub']
 
                 # Add the token to the flask session variable
                 login_session['user'] = token
+                # login_session['access_token'] = token
+                # del login_session['google_id']
+                login_session['name'] = idinfo['name']
+                login_session['email'] = idinfo['email']
+                login_session['picture'] = idinfo['picture']
 
                 flash('Successfully verified. You are logged in! with status 200')
                 # ret_response = make_response(
@@ -166,7 +171,7 @@ def gconnect():
 @app.route('/gdisconnect')
 def gdisconnect():
     ''' Logout from Application '''
-    access_token = login_session.get('access_token')
+    access_token = login_session.get('user')
     if access_token is None:
         print ('Access Token is None')
         response = make_response(json.dumps('Current user not connected.'), 401)
@@ -174,16 +179,16 @@ def gdisconnect():
         return response
     print ('In gdisconnect access token is %s', access_token)
     print ('User name is: ')
-    print (login_session['username'])
-    url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' % login_session['access_token']
+    print (login_session['name'])
+    url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' % login_session['user']
     h = httplib2.Http()
     result = h.request(url, 'GET')[0]
     print ('result is ')
     print (result)
     if result['status'] == '200':
-        del login_session['access_token']
-        del login_session['google_id']
-        del login_session['username']
+        del login_session['user_id']
+        del login_session['user']
+        del login_session['name']
         del login_session['email']
         del login_session['picture']
         response = make_response(json.dumps('Successfully disconnected.'), 200)
@@ -288,7 +293,9 @@ def newProduct():
                 % request.form['name'])
             return render_template('newProduct.html')
         newProduct = ProductItem(
-            name=request.form['name'], user_id=login_session['user_id'])
+            name=request.form['name'], description=request.form['description'],
+            category_id=request.form['category_name'], price=request.form['price'],
+            user_id=login_session['user_id'])
         session.add(newProduct)
         flash('New Category %s Successfully Created' % newProduct.name)
         session.commit()
@@ -422,4 +429,4 @@ def categoryProductJSON(category_name, product_name):
 if __name__ == '__main__':
     app.secret_key = 'super_secret_key'
     app.debug = True
-    app.run(host='0.0.0.0', port=5002)
+    app.run(host='0.0.0.0', port=5003)

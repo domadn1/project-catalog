@@ -3,7 +3,7 @@
     <head>
             <script src="https://apis.google.com/js/platform.js" async defer></script>
             <meta name="google-signin-client_id" content="723871106796-hu59hrlhft84pq9p1k9h4ddhmn5h8mmi.apps.googleusercontent.com">
-            <link rel=stylesheet type=text/css href="{{ url_for('static', filename='styles1.css') }}" />
+            <link rel=stylesheet type=text/css href="{{ url_for('static', filename='styles.css') }}" />
     </head>
 
     <body>
@@ -31,7 +31,7 @@
                 xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
                 xhr.onload = function() {
                     //window.history.back();
-                    window.location.assign('http://localhost:5002/');
+                    window.location.assign('http://localhost:5003/');
                     //console.log('Signed in as: ' + xhr.responseText);
                 };
                 xhr.send('idtoken=' + id_token);

@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -23,7 +25,7 @@ user4 = User(name="Jay", email="jay123@gmail.com", picture="https://encrypted-tb
 session.add(user4)
 session.commit()
 user5 = User(name="Neena", email="neena123@gmail.com", picture="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRRLqcSrdNu2RABjUAlLIankn5rHkbTPsRHeJOFPiZqO2zSsvVD")
-session.add(user1)
+session.add(user5)
 session.commit()
 
 category1 = Category(name="Services")
