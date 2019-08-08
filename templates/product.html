@@ -1,0 +1,15 @@
+{% extends "catalog.html" %}
+{% block content %}
+<div class='description column middle' style="padding-left: 10px;">
+
+    <span>
+        <h2>{{ product.name }}</h2>
+        <p style="text-align: justify;">{{ product.description }}</p>
+        <div class='editdeletepane'>
+            <a href={{ url_for('editProduct', product_name=product.name) }} style="padding-right: 5px; border-right: solid 2px #cccccc;"><b>Edit</b></a>
+            <a href={{ url_for('deleteProduct', product_name=product.name) }}> <b>Delete<b></a>
+        </div>
+    </span>
+
+</div>
+{% endblock %}

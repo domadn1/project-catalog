@@ -1,0 +1,81 @@
+<html>
+
+    <head>
+        <link rel=stylesheet type=text/css href="{{ url_for('static', filename='styles.css') }}" />
+    </head>
+
+    <body>
+        <nav class="navbar-dark navbar-custom fixed-top">
+            <div class="container">
+
+                <div id="navbarResponsive">
+                    <div style="text-align:left;">
+                        <h1>Catalog App</h1>
+                    </div>
+                    <div style="text-align:right;margin-right: 10px;">
+                        <!-- <a style="color:#ff5602;" class="nav-link" href="#">Sign Up</a> -->
+                        <script>
+                            var decodedCookie = decodeURIComponent(document.cookie);
+                            console.log(decodedCookie);
+                            //console.log(authenticate);
+                        </script>
+                        {% if authenticate %}
+                        <a style="color:#ff5602; display:none;" id='login' class="nav-link sign-in"
+                            href="/login">Log In</a>
+                        <a style="color:#ff5602; display:block;" id='logout' class="nav-link sign-out"
+                            href="/disconnect">Log Out</a>
+                        {% else %}
+                        <a style="color:#ff5602; display:block;" id='login' class="nav-link sign-in"
+                            href="/login">Log In</a>
+                        <a style="color:#ff5602; display:none;" id='logout' class="nav-link sign-out"
+                            href="/disconnect">Log Out</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </nav>
+        <div class='pane'>
+
+            <div class='flash'>
+                {% with messages = get_flashed_messages() %}
+
+                <ul>
+                    {% for message in messages %}
+                    <li style="padding: 5px;"><strong>{{message}}</strong></li>
+                    {% endfor %}
+                </ul>
+
+                {% endwith %}
+            </div>
+            {% block editdeletecontent %}
+            <div class='row'>
+
+                <div class='description column side'>
+                    <h2>Categories</h2>
+                    {%for category in categories %}
+                    <a href={{ url_for('exploreCategory', category_name=category.name) }}>
+                        <span>
+                            <h3>{{ category.name }}</h3>
+                        </span>
+                    </a>
+                    {% endfor %}
+                    <h3><a href={{ url_for('newCategory') }}>Create New Category</a></h3>
+                    <h3><a href={{ url_for('newProduct') }}>Create New Product</a></h3>
+                </div>
+
+                {% block content %}
+                <div class='description column middle' style="padding-left: 10px;">
+                    <h2>All Products</h2>
+                    {%for product in products %}
+                    <h3>{{ product.name }}</h3>
+                    {% endfor %}
+                </div>
+                {% endblock %}
+
+            </div>
+            {% endblock %}
+        </div>
+
+    </body>
+
+</html>

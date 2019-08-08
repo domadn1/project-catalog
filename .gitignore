@@ -1,0 +1,9 @@
+catalog.db
+client_secret.json
+fb_client_secrets.json
+catalog.json
+scripts.json
+styles2.css
+login1.html
+login.py
+*.pyc
