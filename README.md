@@ -16,6 +16,8 @@ These instrunctions will help you to get project copy and running to local machi
 ### Requirements
 Now moving towards how to use this web application we have two options for environment
 
+If you do not have Git installed, download suitable version to your operating system from [Download-Git](https://git-scm.com/downloads) and install because for windows user Git Bash is required to get unix style terminal.
+
 **Virtual machine environment:**
 
 1. Vagrant
@@ -39,22 +41,23 @@ For information on how to configure project, access this doc [Google SignIn](htt
 Set application for using sign in feature and on the left side bar, under APIs and Services, access credential
 
 ```
-* In OAuth Consent screen >>
+* In OAuth Consent screen:
 
 In Scopes for google APIs, keep scope as it is which will remain email, profile, openid
 ```
 ```
-* In Credential tab >>
+* In Credential tab:
 
 In Authorized javascript origins set up http://localhost:5000 and
-in Authorized redirect URIs set up two urls, one is http://localhost:5000/oauth2callback and second is http://localhost:5000/catalog
+in Authorized redirect URIs set up two urls, one is http://localhost:5000/oauth2callback
+and second is http://localhost:5000/catalog
 ```
 
 * Get your client_id and go to code project-catalog/templates/login.html line5 and **replace your client_id** over there
 
 * Also, you have to download json file of credential displaying under OAuth 2.0 client IDs list view. After download you will rename file to **client_secret.json** and place that file inside project-catalog folder.
 
-**Project Setup**:
+### Project Setup
 
 You can download this application and this will provide you project-catalog folder or you can download this repository and unzip the file so ultimately you will get project-catalog folder.
 if you are using virtual machine then you can keep this folder inside virtual environment, exactly besides the file Vagrantfile. so, you can access it as /vagrant/project-catalog in git bash terminal.
@@ -67,4 +70,5 @@ $ python3 insert_data.py //add few dummy datas
 
 $ python3 app.py //start application
 ```
+
 you can access application through browser by accessing address http://localhost:5000/catalog
