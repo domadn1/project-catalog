@@ -3,7 +3,7 @@
 <div class='description column middle' style="padding-left: 10px;">
     <h2>{{category.name}} ({{total}} items)</h2>
     {% for product in products %}
-        <a href={{ url_for('exploreProduct', category_name=category.name, product_name=product.name) }}><span>
+        <a href={{ url_for('explore_product', category_name=category.name, product_name=product.name) }}><span>
             <h3>{{ product.name }}</h3>
         </span></a>
     {% endfor %}

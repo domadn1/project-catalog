@@ -5,32 +5,21 @@
     </head>
 
     <body>
-        <nav class="navbar-dark navbar-custom fixed-top">
-            <div class="container">
-
-                <div id="navbarResponsive">
-                    <div style="text-align:left;">
-                        <h1>Catalog App</h1>
-                    </div>
-                    <div style="text-align:right;margin-right: 10px;">
-                        <!-- <a style="color:#ff5602;" class="nav-link" href="#">Sign Up</a> -->
-                        <script>
-                            var decodedCookie = decodeURIComponent(document.cookie);
-                            console.log(decodedCookie);
-                            //console.log(authenticate);
-                        </script>
-                        {% if authenticate %}
-                        <a style="color:#ff5602; display:none;" id='login' class="nav-link sign-in"
-                            href="/login">Log In</a>
-                        <a style="color:#ff5602; display:block;" id='logout' class="nav-link sign-out"
-                            href="/gdisconnect">Log Out</a>
-                        {% else %}
-                        <a style="color:#ff5602; display:block;" id='login' class="nav-link sign-in"
-                            href="/login">Log In</a>
-                        <a style="color:#ff5602; display:none;" id='logout' class="nav-link sign-out"
-                            href="/gdisconnect">Log Out</a>
-                        {% endif %}
-                    </div>
+        <nav class="navbar-dark fixed-top" style="background-color:#304279;">
+            <div class="container row" style="width: 90%">
+                <div class="column" style="width: 50%;"><h1>Catalog App</h1></div>
+                <div class="column" style="text-align:right; width: 50%;">
+                    {% if authenticate %}
+                        <h1><a style="color:#ff5602; display:none;" id='login' class="nav-link"
+                            href="/login"><b>Log In</b></a></h1>
+                        <h1><a style="color:#ff5602; display:block;" id='logout' class="nav-link"
+                            href="/gdisconnect">Log Out</a></h1>
+                    {% else %}
+                        <h1><a style="color:#ff5602; display:block;" id='login' class="nav-link"
+                            href="/login">Log In</a></h1>
+                        <h1><a style="color:#ff5602; display:none;" id='logout' class="nav-link"
+                            href="/gdisconnect">Log Out</a></h1>
+                    {% endif %}
                 </div>
             </div>
         </nav>
@@ -53,21 +42,21 @@
                 <div class='description column side'>
                     <h2>Categories</h2>
                     {%for category in categories %}
-                    <a href={{ url_for('exploreCategory', category_name=category.name) }}>
+                    <a href={{ url_for('explore_category', category_name=category.name) }}>
                         <span>
                             <h3>{{ category.name }}</h3>
                         </span>
                     </a>
                     {% endfor %}
-                    <h3><a href={{ url_for('newCategory') }}>Create New Category</a></h3>
-                    <h3><a href={{ url_for('newProduct') }}>Create New Product</a></h3>
+                    <h3><a href={{ url_for('new_category') }}>Create New Category</a></h3>
+                    <h3><a href={{ url_for('new_product') }}>Create New Product</a></h3>
                 </div>
 
                 {% block content %}
                 <div class='description column middle' style="padding-left: 10px;">
                     <h2>All Products</h2>
                     {%for product in products %}
-                    <h3>{{ product.name }}</h3>
+                    <span><h3 style="font-size: 0.8em; color:black;">{{ product.name }}</h3></span>
                     {% endfor %}
                 </div>
                 {% endblock %}

@@ -2,48 +2,40 @@
 
     <head>
             <script src="https://apis.google.com/js/platform.js" async defer></script>
-            <meta name="google-signin-client_id" content="723871106796-hu59hrlhft84pq9p1k9h4ddhmn5h8mmi.apps.googleusercontent.com">
+            <meta name="google-signin-client_id" content="YOUR_CLIENT_ID.apps.googleusercontent.com">
             <link rel=stylesheet type=text/css href="{{ url_for('static', filename='styles.css') }}" />
     </head>
 
     <body>
-        <!-- GOOGLE SIGN IN-->
+        <div class='pane' style="margin-right: 25%; margin-left: 25%;">
+            <div id='login_btn' class="row">
+                <!-- GOOGLE SIGN IN-->
 
-        <div id="gsigninBtn">
-                <h2>Log in to your Catalog App account</h2>
-                <div class="g-signin2" data-onsuccess="onSignIn"></div>
-                <!-- <div id="g-login-btn" style="height: 34px; width: 157px; margin-bottom: 10px;margin-top: 20px;" class="g-signin2 row" data-onsuccess="onSignIn" data-onfailure="onSignInFailure" data-theme="dark"></div> -->
-            <!-- <span class="g-signin2" data-scope="openid email profile"
-                data-client_id="403421116395-lm9e1kc2jtlcg41lhsqpuvbprglg610a.apps.googleusercontent.com"
-                data-redirecturi="postmessage" data-accesstype="offline" data-cookiepolicy="single_host_origin"
-                data-onsuccess="onSignIn" data-onfailure="onSignInFailure" data-approvalprompt="force">
-            </span> -->
+                <div id="gsigninBtn">
+                        <h2>Log in to your Catalog App account</h2>
+                        <div class="g-signin2" style="height: 34px; width: 157px; margin-bottom: 10px;margin-top: 20px;" data-onsuccess="onSignIn"></div>
+                </div>
+
+                <script>
+                    function onSignIn(googleUser) {
+                        var id_token = googleUser.getAuthResponse().id_token;
+                        var user = googleUser.getBasicProfile().getName()
+                        var xhr = new XMLHttpRequest();
+                        xhr.open('POST', '/gconnect?state={{STATE}}');
+                        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                        xhr.onload = function() {
+                            window.location.assign('http://localhost:5000/');
+                        };
+                        xhr.send('idtoken=' + id_token);
+                    }
+                    function onSignInFailure() {
+                        console.log(xhr.responseText)
+                    }
+                </script>
+
+                <!--END GOOGLE SIGN IN -->
+            </div>
         </div>
-
-        <script>
-            function onSignIn(googleUser) {
-                // Hide the sign-in button now that the user is authorized
-                // $('#gsigninBtn').attr('style', 'display: none');
-                var id_token = googleUser.getAuthResponse().id_token;
-                var user = googleUser.getBasicProfile().getName()
-                var xhr = new XMLHttpRequest();
-                xhr.open('POST', '/gconnect?state={{STATE}}');
-                xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-                xhr.onload = function() {
-                    //window.history.back();
-                    window.location.assign('http://localhost:5003/');
-                    //console.log('Signed in as: ' + xhr.responseText);
-                };
-                xhr.send('idtoken=' + id_token);
- 
-            }
-            function onSignInFailure() {
-                console.log(xhr.responseText)
-            }
-
-        </script>
-
-        <!--END GOOGLE SIGN IN -->
     </body>
 
 </html>

@@ -19,17 +19,10 @@ h4 {
 h1,
 h2 {
     font-family: 'georgia', serif;
-    margin: 0;
 }
 
 h2 {
     font-size: 1.2em;
-}
-
-p,
-dd,
-dt {
-    color: #0f0f0f;
 }
 
 a {
@@ -49,26 +42,11 @@ a {
     background-color: whitesmoke
 }
 
-.header {
-    left: 100%;
-    text-align: center;
-}
-
-.name {
-    width: 50%;
-    display: inline-block;
-    float: left;
-}
-
-.description {}
-
 .price {
     text-align: right;
     width: 50%;
     float: right;
 }
-
-.editdeletepane {}
 
 .flash {
     background: #f8b0a4;
@@ -81,74 +59,13 @@ a {
     left: 0;
     z-index: 1030;
 }
-.navbar-custom {
-    padding-top: 1rem;
-    padding-bottom: 1rem;
-    background-color:#304279;
-}
 
-.navbar-expand-lg .navbar-collapse {
-    display: -ms-flexbox!important;
-    display: flex!important;
-    -ms-flex-preferred-size: auto;
-    flex-basis: auto;
-}
-
-.navbar-collapse {
-    -ms-flex-preferred-size: 100%;
-    flex-basis: 100%;
-    -ms-flex-positive: 1;
-    flex-grow: 1;
-    -ms-flex-align: center;
-    align-items: center;
-}
 .container {
     width: 100%;
     padding-right: 15px;
     padding-left: 15px;
     margin-right: auto;
     margin-left: auto;
-}
-.navbar>.container, .navbar>.container-fluid {
-    display: -ms-flexbox;
-    display: flex;
-    -ms-flex-wrap: wrap;
-    flex-wrap: wrap;
-    -ms-flex-align: center;
-    align-items: center;
-    -ms-flex-pack: justify;
-    justify-content: space-between;
-}
-.navbar-custom .navbar-brand {
-    text-transform: uppercase;
-    font-size: 1rem;
-    letter-spacing: .1rem;
-    font-weight: 700;
-}
-.navbar-dark .navbar-brand {
-    color: #fff;
-}
-.navbar-brand {
-    display: inline-block;
-    padding-top: .3125rem;
-    padding-bottom: .3125rem;
-    margin-right: 1rem;
-    font-size: 1.25rem;
-    line-height: inherit;
-    white-space: nowrap;
-}
-.navbar-nav {
-    display: -ms-flexbox;
-    display: flex;
-    -ms-flex-direction: column;
-    flex-direction: column;
-    padding-left: 0;
-    margin-bottom: 0;
-    list-style: none;
-}
-dl, ol, ul {
-    margin-top: 0;
-    margin-bottom: 1rem;
 }
 
 ul {
@@ -159,6 +76,8 @@ ul {
     margin-inline-start: 0px;
     margin-inline-end: 0px;
     padding-inline-start: 40px;
+    margin-top: 0;
+    margin-bottom: 1rem;
 }
 li {
     display: list-item;
@@ -173,10 +92,6 @@ li {
 .column.side {
     width: 20%;
 }
-/* .column.side {
-    width: 20%;
-    border-right: 1px solid #252d46;
-} */
 .column.middle {
     width: 75%;
 }
@@ -185,9 +100,4 @@ li {
     display: table;
     clear: both;
   }
-.sign-in {
-    display: block;
-}
-.sign-out {
-    display: none;
-}
+

@@ -1,105 +1,84 @@
 #!/usr/bin/env python3
 
-from flask import Flask, render_template, request, redirect
-from flask import jsonify, url_for, flash
-
-from sqlalchemy import create_engine, asc
-from sqlalchemy.orm import sessionmaker
-from database_setup import Base, Category, ProductItem, User
-from flask import session as login_session
+''' This module shows Product catalog as web application and
+allows to add products on display under different category
+'''
 
 import random
 import string
-
-from oauth2client.client import flow_from_clientsecrets
-from oauth2client.client import FlowExchangeError
-import httplib2
 import json
-from flask import make_response
-# import requests
+
+from flask import Flask, render_template, request, redirect
+from flask import jsonify, url_for, flash
+from flask import session as login_session
+from sqlalchemy import create_engine, asc
+from sqlalchemy.orm import sessionmaker
 from google.oauth2 import id_token
 from google.auth.transport import requests
-from apiclient import discovery
-# import httplib2
-from oauth2client import client
-# import google_authentication as gAuth
+
+from database_setup import Base, Category, ProductItem, User
+
 
 app = Flask(__name__)
 
 # Connect to Database and create database session
-engine = create_engine('sqlite:///catalog.db?check_same_thread=False')
-Base.metadata.bind = engine
+ENGINE = create_engine('sqlite:///catalog.db?check_same_thread=False')
+Base.metadata.bind = ENGINE
 
-DBSession = sessionmaker(bind=engine)
-session = DBSession()
+DBSESSION = sessionmaker(bind=ENGINE)
+SESSION = DBSESSION()
 
 CLIENT_ID = json.loads(
     open('client_secret.json', 'r').read())['web']['client_id']
-# APPLICATION_NAME = "Project Catalog"
 
 
-# Create anti-forgery state token
 @app.route('/login')
-def showLogin():
+def show_login():
+    ''' Create anti-forgery state token '''
     state = ''.join(random.choice(string.ascii_uppercase + string.digits)
-                for x in range(32))
-    print('state ========', state)
+                    for x in range(32))
     login_session['state'] = state
-    return render_template('login.html', STATE=state) 
-    #"The current session state is %s" % login_session['state']
+    # Returns Login screen with google account login
+    return render_template('login.html', STATE=state)
 
 
-# disconnect from the login session
-@app.route('/disconnect')
-def disconnect():
-    if 'username' in login_session:
-        gdisconnect()
-        flash("You have successfully been logged out.")
-        return redirect(url_for('showCatalog'))
-    else:
-        flash("You were not logged in")
-        return redirect(url_for('showCatalog'))
-
-
-def createUser(login_session):
-    newUser = User(name=login_session['username'],
-                    email=login_session['email'],
-                    picture=login_session['picture'])
-    session.add(newUser)
-    session.commit()
-    user = session.query(User).filter_by(email=login_session['email']).one()
+def create_user(loginsession):
+    ''' Create user in database from login session'''
+    new_user = User(name=loginsession['username'],
+                    email=loginsession['email'],
+                    picture=loginsession['picture'])
+    SESSION.add(new_user)
+    SESSION.commit()
+    user = SESSION.query(User).filter_by(email=loginsession['email']).one()
     return user.id
 
 
-def getUserInfo(user_id):
-    user = session.query(User).filter_by(id=user_id).one()
-    return user
-
-
-def getUserID(email):
-    try:
-        user = session.query(User).filter_by(email=email).one()
+def get_user_id(email):
+    ''' Finds user and returns id for given email, if exists '''
+    user = SESSION.query(User).filter_by(email=email).first()
+    if user:
         return user.id
-    except:
-        return None
+    return None
 
 
-def Is_Authenticated():
-    if 'user' in login_session:
+def is_authenticated():
+    ''' Checks if token exist in session then Authenticate user '''
+    if 'username' in login_session:
         return True
     return False
-    # return ('user' in login_session)
 
 
 @app.route('/gconnect', methods=['POST'])
 def gconnect():
-    print('\n\n\nGconnect invoked')
+    ''' Tries to connect with Google to authenticate valid user
+        Allow application login through Google account
+        Make application login on successful login of google user
+        Returns to Catalog home screen
+    '''
     try:
         # Check if the POST request is trying to log in
-
-        print('headers ========',request.headers)
         if 'idtoken' in request.form:
-            if not Is_Authenticated():
+            if not is_authenticated():
                 # Retrive token from post request
                 token = request.form['idtoken']
 
@@ -117,94 +96,55 @@ def gconnect():
                 if idinfo['iss'] not in verified_providers:
                     raise ValueError('Wrong issuer.')
 
-                # Retrive user's Google Account ID from the decoded token.
-                # userid = idinfo['sub']
-                login_session['user_id'] = idinfo['sub']
-
-                # Add the token to the flask session variable
-                login_session['user'] = token
-                # login_session['access_token'] = token
-                # del login_session['google_id']
-                login_session['name'] = idinfo['name']
+                # Adds user profile information to the session
+                login_session['username'] = idinfo['name']
                 login_session['email'] = idinfo['email']
                 login_session['picture'] = idinfo['picture']
 
+                # Checks if user exists, and make a new one if it doesn't
+                user_id = get_user_id(idinfo["email"])
+                if not user_id:
+                    user_id = create_user(login_session)
+
+                login_session['user_id'] = user_id # Adds user to the session
+                # Retrive user's Google Account ID from the decoded token.
+                # and add to the session
+                login_session['google_id'] = idinfo['sub']
+
+                # Add the token to the session
+                login_session['idtoken'] = token
+
                 flash('Successfully verified. You are logged in! with status 200')
-                # ret_response = make_response(
-                #     jsonify(
-                #         message='Successfully verified. You are logged in!',
-                #         status=200)
-                # )
 
             # Nothing to do with already logged in user
-            else:
-                flash('User is already logged in with status 201')
-                # return 'True'
-                # ret_response = make_response(
-                #     jsonify(message='User is already logged in.', status=201)
-                # )
-
-        # POST request without idtoken tries to log out.
-        else:
-            # Remove token from login session
-            if Is_Authenticated():
-                login_session.pop('user', None)
-
-            flash('User has been logged out with status 200')
-            # return 'False'
-            # ret_response = make_response(
-            #     jsonify(message="User has been logged out", status=200)
-            # )
+            flash('User is already logged in with status 201')
 
     except ValueError:
         # handles invalid token error
         flash('Error: unable to verify token id with status 401')
-        # return 'False'
-        # ret_response = make_response(
-        #     jsonify(message='Error: unable to verify token id', status=401)
-        # )
 
-    # return ret_response
-    return redirect(url_for('showCatalog'))
+    # Returns to Catalog Screen
+    return redirect(url_for('show_catalog'))
 
 
-@app.route('/gdisconnect')
-def gdisconnect():
-    ''' Logout from Application '''
-    access_token = login_session.get('user')
-    if access_token is None:
-        print ('Access Token is None')
-        response = make_response(json.dumps('Current user not connected.'), 401)
-        response.headers['Content-Type'] = 'application/json'
-        return response
-    print ('In gdisconnect access token is %s', access_token)
-    print ('User name is: ')
-    print (login_session['name'])
-    url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' % login_session['user']
-    h = httplib2.Http()
-    result = h.request(url, 'GET')[0]
-    print ('result is ')
-    print (result)
-    if result['status'] == '200':
-        del login_session['user_id']
-        del login_session['user']
-        del login_session['name']
-        del login_session['email']
-        del login_session['picture']
-        response = make_response(json.dumps('Successfully disconnected.'), 200)
-        response.headers['Content-Type'] = 'application/json'
-        return response
-    else:
-        response = make_response(json.dumps('Failed to revoke token for given user.', 400))
-        response.headers['Content-Type'] = 'application/json'
-        return response
+@app.route("/gdisconnect")
+def logout():
+    ''' Logging out only from this application and not from the google '''
+    del login_session['user_id']
+    del login_session['google_id']
+    del login_session['idtoken']
+    del login_session['username']
+    del login_session['email']
+    del login_session['picture']
+    flash('Successfully Logged out!')
+    return redirect(url_for('show_catalog'))
 
 
 def category_exists(category_name):
     ''' Checks if category exist
         return list with boolean value and category object if exist
     '''
-    category = session.query(Category).filter_by(name=category_name).first()
+    category = SESSION.query(Category).filter_by(name=category_name).first()
     if category is None:
         return [False]
     return [True, category]
@@ -214,7 +154,7 @@ def product_exists(product_name):
     ''' Checks if product exist
         return list with boolean value and product object if exist
     '''
-    product = session.query(ProductItem).filter_by(name=product_name).first()
+    product = SESSION.query(ProductItem).filter_by(name=product_name).first()
     if product is None:
         return [False]
     return [True, product]
@@ -222,195 +162,248 @@ def product_exists(product_name):
 
 @app.route('/')
 @app.route('/catalog/')
-def showCatalog():
+def show_catalog():
     ''' Return all Categories '''
-    categories = session.query(Category).order_by(asc(Category.name))
-    products = session.query(ProductItem).order_by(asc(ProductItem.name))
-    authenticate = Is_Authenticated()
-    print('Is_Authenticated() === ',authenticate)
+    categories = SESSION.query(Category).order_by(asc(Category.name))
+    products = SESSION.query(ProductItem).order_by(asc(ProductItem.name))
     return render_template('catalog.html', categories=categories,
-        products=products, authenticate=authenticate)
+                           products=products,
+                           authenticate=is_authenticated())
 
 
 @app.route('/catalog/<category_name>/items')
-def exploreCategory(category_name):
+def explore_category(category_name):
     ''' Return all products which belongs to given category '''
-    categories = session.query(Category).order_by(asc(Category.name))
-    category = session.query(Category).filter_by(name=category_name).one()
-    products_query = session.query(
+    categories = SESSION.query(Category).order_by(asc(Category.name))
+    category = SESSION.query(Category).filter_by(name=category_name).one()
+    products_query = SESSION.query(
         ProductItem).filter_by(category_id=category.id)
     products = products_query.all()
     total_products = products_query.count()
     return render_template('catagoryProducts.html', total=total_products,
-        category=category, products=products,
-        categories=categories, authenticate=Is_Authenticated())
+                           category=category, products=products,
+                           categories=categories,
+                           authenticate=is_authenticated())
 
 
 @app.route('/catalog/<category_name>/<product_name>')
-def exploreProduct(category_name, product_name):
+def explore_product(category_name, product_name):
     ''' Returns product detail '''
-    categories = session.query(Category).order_by(asc(Category.name))
-    product = session.query(
+    categories = SESSION.query(Category).order_by(asc(Category.name))
+    product = SESSION.query(
         ProductItem).filter_by(name=product_name).one()
     return render_template('product.html', product=product,
-        categories=categories, authenticate=Is_Authenticated())
+                           categories=categories,
+                           category=category_name,
+                           authenticate=is_authenticated())
 
 
 @app.route('/catalog/category/new/', methods=['GET', 'POST'])
-def newCategory():
+def new_category():
     ''' Create new category
         only allows to registered user
     '''
-    if not Is_Authenticated():
-        return redirect('/login')
+    if not is_authenticated():
+        return redirect('/login') # if not logged in, redirect to login screen
+
     if request.method == 'POST':
+        # Checks if category already exist
+        # then return to AddCategory screen back
         if category_exists(request.form['name'])[0]:
             flash('Category %s Already Exists! Please Try with Different Name'
-                % request.form['name'])
+                  % request.form['name'])
             return render_template('newCategory.html')
-        print('login_session==========',login_session)
-        newCategory = Category(
+
+        # Creates new category in database
+        newcateg = Category(
             name=request.form['name'], user_id=login_session['user_id'])
-        session.add(newCategory)
-        flash('New Category %s Successfully Created' % newCategory.name)
-        session.commit()
-        return redirect(url_for('showCatalog'))
-    else:
-        return render_template('newCategory.html', authenticate=Is_Authenticated())
+        SESSION.add(newcateg)
+        flash('New Category %s Successfully Created' % newcateg.name)
+        SESSION.commit()
+        # Returns to catalog screen on successful creation of category
+        return redirect(url_for('show_catalog'))
+
+    # For GET request, returns to AddCategory screen
+    return render_template('newCategory.html', authenticate=is_authenticated())
 
 
 @app.route('/catalog/product/new/', methods=['GET', 'POST'])
-def newProduct():
+def new_product():
     ''' Create new product
         only allows to registered user
     '''
-    if not Is_Authenticated():
-        return redirect('/login')
-    categories = session.query(Category).order_by(asc(Category.name))
+    if not is_authenticated():
+        return redirect('/login') # if not logged in, redirect to login screen
+    categories = SESSION.query(Category).order_by(asc(Category.name))
+
+    # Checks if request asking for data or submiting data
     if request.method == 'POST':
+        # Checks if product already exist
+        # then return to AddProduct screen back
         if product_exists(request.form['name'])[0]:
             flash('Product %s Already Exists! Please Try with Different Name'
-                % request.form['name'])
+                  % request.form['name'])
             return render_template('newProduct.html')
-        newProduct = ProductItem(
+        # Creates new product in database
+        newproduct = ProductItem(
             name=request.form['name'], description=request.form['description'],
             category_id=request.form['category_name'], price=request.form['price'],
             user_id=login_session['user_id'])
-        session.add(newProduct)
-        flash('New Category %s Successfully Created' % newProduct.name)
-        session.commit()
-        return redirect(url_for('showCatalog'))
-    else:
-        return render_template('newProduct.html', categories=categories,
-            authenticate=Is_Authenticated())
+        SESSION.add(newproduct)
+        flash('New Category %s Successfully Created' % newproduct.name)
+        SESSION.commit()
+        # Returns to catalog screen on successful creation of category
+        return redirect(url_for('show_catalog'))
+
+    # For GET request, returns to AddProduct screen
+    return render_template('newProduct.html', categories=categories,
+                           authenticate=is_authenticated())
 
 
 @app.route('/catalog/<product_name>/edit/', methods=['GET', 'POST'])
-def editProduct(product_name):
+def edit_product(product_name):
     ''' Updates product detail
         only allows related user
     '''
-    if not Is_Authenticated():
-        return redirect('/login')
-    categories = session.query(Category).order_by(asc(Category.name))
+    if not is_authenticated():
+        return redirect('/login') # if not logged in, redirect to login screen
+    categories = SESSION.query(Category).order_by(asc(Category.name))
 
-    productToEdit = session.query(
+    # Search Product from database for given product name
+    product_to_edit = SESSION.query(
         ProductItem).filter_by(name=product_name).one()
 
+    # Check if the user is the owner of this product
+    if product_to_edit.user_id != login_session['user_id']:
+        flash('Only owner of the product can make changes.')
+        category = SESSION.query(Category).filter_by(
+            id=product_to_edit.category_id).one()
+        return redirect(url_for('explore_product', category_name=category.name,
+                                product_name=product_name))
+
+    # Checks if request asking for data or submiting data
     if request.method == 'POST':
-        category = session.query(Category).filter_by(
-            id=productToEdit.category_id).one()
+        # Fetches Category from database for given product
+        category = SESSION.query(Category).filter_by(
+            id=product_to_edit.category_id).one()
+
+        # Update product name in database if edited by web user
         if request.form['name'] and (
-            productToEdit.name != request.form['name']):
+                product_to_edit.name != request.form['name']):
+
             # Checks if Product's name updated through web then reflect in DB
-            productToEdit.name = request.form['name']
-            flash('Product name successfully edited %s' % productToEdit.name)
+            product_to_edit.name = request.form['name']
+            flash('Product name successfully edited %s' % product_to_edit.name)
+
+        # Update product description in database if edited by web user
         if request.form['description'] and (
-            productToEdit.description != request.form['description']):
+                product_to_edit.description != request.form['description']):
+
             # Checks if Product's description updated through web
             # then reflect in DB
-            productToEdit.description = request.form['description']
+            product_to_edit.description = request.form['description']
             flash('Product description successfully edited %s' %
-                  productToEdit.description)
+                  product_to_edit.description)
+
+        # Update product price in database if edited by web user
         if request.form['price'] and (
-            productToEdit.price != request.form['price']):
+                product_to_edit.price != request.form['price']):
+
             # Checks if Product's price updated through web
             # then reflect in DB
-            productToEdit.price = request.form['price']
+            product_to_edit.price = request.form['price']
             flash('Product price successfully edited to %s' %
-                  productToEdit.price)
-        if request.form['category_name'] and productToEdit.category_id != int(
-            request.form['category_name']):
-            # Checks if Product's Category updated through web 
+                  product_to_edit.price)
+
+        # Update product category in database if edited by web user
+        if request.form['category_name'] and product_to_edit.category_id != int(
+                request.form['category_name']):
+
+            # Checks if Product's Category updated through web
             # then reflect in DB
-            productToEdit.category_id = request.form['category_name']
-            category = session.query(Category).filter_by(
-                id=productToEdit.category_id).one()
+            product_to_edit.category_id = request.form['category_name']
+            category = SESSION.query(Category).filter_by(
+                id=product_to_edit.category_id).one()
             flash('Product category successfully edited %s' % category.name)
-        session.commit()
-        return redirect(url_for('exploreProduct',
+        SESSION.commit()
+
+        # Returns to Product Detail screen with updated detail
+        return redirect(url_for('explore_product',
                                 category_name=category.name,
-                                product_name=productToEdit.name))
-    else:
-        return render_template(
-            'editProduct.html', product=productToEdit, categories=categories,
-            authenticate=Is_Authenticated())
+                                product_name=product_to_edit.name))
+
+    # For GET request, returns to EditProduct screen
+    return render_template(
+        'editProduct.html', product=product_to_edit, categories=categories,
+        authenticate=is_authenticated())
 
 
 @app.route('/catalog/<product_name>/delete/',
            methods=['GET', 'POST'])
-def deleteProduct(product_name):
+def delete_product(product_name):
     ''' Deletes Product permananetly
         only allows related user
     '''
-    if  not Is_Authenticated():
-        return redirect('/login')
-    product = session.query(
+    if  not is_authenticated():
+        return redirect('/login') # if not logged in, redirect to login screen
+    product = SESSION.query(
         ProductItem).filter_by(name=product_name).one()
-    category = session.query(Category).filter_by(id=product.category_id).one()
+    category = SESSION.query(Category).filter_by(id=product.category_id).one()
+
+    # Check if the user is the owner of this product
+    if product.user_id != login_session['user_id']:
+        flash('Only owner of the product can make changes.')
+        category = SESSION.query(Category).filter_by(
+            id=product.category_id).one()
+        return redirect(url_for('explore_product', category_name=category.name,
+                                product_name=product_name))
+
+    # Checks if request asking for data or submiting data
     if request.method == 'POST':
-        session.delete(product)
+        SESSION.delete(product) # Removes product from database
         flash('%s Successfully Deleted' % product.name)
-        session.commit()
+        SESSION.commit()
+
+        # Returns to ShowProduct for category page after removing product
         return redirect(
-            url_for('exploreCategory', category_name=category.name))
-    else:
-        return render_template(
-            'deleteProduct.html', product=product, category=category,
-            authenticate=Is_Authenticated())
+            url_for('explore_category', category_name=category.name))
+
+    # For GET request, returns to DeleteProduct screen
+    return render_template(
+        'deleteProduct.html', product=product, category=category,
+        authenticate=is_authenticated())
 
 
 @app.route('/api/v1/catalog.json')
-def catalogJSON():
+def catalog_json():
     ''' Returns json endpoint for all items with all categories '''
-    categories = session.query(Category).all()
-    category = []
+    categories = SESSION.query(Category).all()
+    category_list = []
 
-    for c in categories:
-        products = session.query(
-            ProductItem).filter_by(category_id=c.id).all()
-        category_dict = c.serialize
-        category.append(category_dict)
-        product_list = [p.serialize for p in products]
+    for category in categories:
+        products = SESSION.query(
+            ProductItem).filter_by(category_id=category.id).all()
+        category_dict = category.serialize
+        category_list.append(category_dict)
+        product_list = [product.serialize for product in products]
         category_dict.update({'items': product_list})
 
-    return jsonify(category=category)
+    return jsonify(category=category_list)
 
 
 @app.route('/api/v1/catalog/<category_name>/items.json')
-def categoryItemsJSON(category_name):
+def category_items_json(category_name):
     ''' Returns json endpoint for all items with specified category '''
     valid_category = category_exists(category_name)
     if valid_category[0]:
-        products = session.query(ProductItem).filter_by(
+        products = SESSION.query(ProductItem).filter_by(
             category_id=valid_category[1].id).all()
         return jsonify(items=[p.serialize for p in products])
-    else:
-        return jsonify(error='This category does not exist!')
+    return jsonify(error='This category does not exist!')
 
 
 @app.route('/api/v1/catalog/<category_name>/<product_name>/json')
-def categoryProductJSON(category_name, product_name):
+def category_product_json(category_name, product_name):
     ''' Returns json endpoint with specified category and Product '''
     valid_category = category_exists(category_name)
     valid_product = product_exists(product_name)
@@ -418,12 +411,9 @@ def categoryProductJSON(category_name, product_name):
         if valid_product[0]:
             if valid_product[1].category_id == valid_category[1].id:
                 return jsonify(item=[valid_product[1].serialize])
-            else:
-                return jsonify(error='Product Category does not match with this category!')
-        else:
-            return jsonify(error='This Product does not exist!')
-    else:
-        return jsonify(error='This category does not exist!')
+            return jsonify(error='Product Category does not match with this category!')
+        return jsonify(error='This Product does not exist!')
+    return jsonify(error='This category does not exist!')
 
 
 if __name__ == '__main__':

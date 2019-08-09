@@ -1,6 +1,6 @@
 {% extends "catalog.html" %}
 {% block editdeletecontent %}
-<form action="{{ url_for('editProduct', product_name = product.name)}}" method = "post">
+<form action="{{ url_for('edit_product', product_name = product.name)}}" method = "post">
     <h2>Edit Item</h2>
     <p>
         <div>Title</div>
