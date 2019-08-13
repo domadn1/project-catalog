@@ -36,9 +36,9 @@ Or you can use **enviornment of your choice**. However, it should support and ha
 As the application using Google SignIn for authentication you should have Google Account for developer login.
 
 You will required to create Google API console project and client id to make this application sign in through google.
-For information on how to configure project, access this doc [Google SignIn](https://developers.google.com/identity/sign-in/web/sign-in "Google SignIn configuration")
+For information on how to configure project, access this doc [Google SignIn](https://developers.google.com/identity/sign-in/web/sign-in "Google SignIn configuration") or follow step1 from [Google SignIn Web](https://developers.google.com/identity/sign-in/web/server-side-flow).
 
-Set application for using sign in feature and on the left side bar, under APIs and Services, access credential
+Set application for using sign in feature and on the left side bar, under APIs and Services, access credential.
 
 ```
 * In OAuth Consent screen:
@@ -63,7 +63,7 @@ You can download this application and this will provide you project-catalog fold
 if you are using virtual machine then you can keep this folder inside virtual environment, exactly besides the file Vagrantfile. so, you can access it as /vagrant/project-catalog in git bash terminal.
 
 Now, vagrant is all set to go, run following commands
-```
+```console
 $ python3 database_setup.py //create catalog database
 
 $ python3 insert_data.py //add few dummy datas

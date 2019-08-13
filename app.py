@@ -1,16 +1,22 @@
 #!/usr/bin/env python3
 
-''' This module shows Product catalog as web application and
+""" This module shows Product catalog as web application and
 allows to add products on display under different category
-'''
+"""
 
 import random
 import string
 import json
 
-from flask import Flask, render_template, request, redirect
-from flask import jsonify, url_for, flash
-from flask import session as login_session
+from flask import (
+    Flask,
+    render_template,
+    request, redirect,
+    jsonify,
+    url_for,
+    flash,
+    session as login_session
+)
 from sqlalchemy import create_engine, asc
 from sqlalchemy.orm import sessionmaker
 from google.oauth2 import id_token
@@ -34,7 +40,7 @@ CLIENT_ID = json.loads(
 
 @app.route('/login')
 def show_login():
-    ''' Create anti-forgery state token '''
+    """ Creates anti-forgery state token """
     state = ''.join(random.choice(string.ascii_uppercase + string.digits)
                     for x in range(32))
     login_session['state'] = state
@@ -43,7 +49,11 @@ def show_login():
 
 
 def create_user(loginsession):
-    ''' Create user in database from login session'''
+    """ Create user in database from login session
+    Args:
+        param: loginsession
+    Return (int): user id 
+    """
     new_user = User(name=loginsession['username'],
                     email=loginsession['email'],
                     picture=loginsession['picture'])
@@ -54,7 +64,7 @@ def create_user(loginsession):
 
 
 def get_user_id(email):
-    ''' Finds user and returns id for given email, if exists '''
+    """ Finds user and returns id for given email, if exists """
     user = SESSION.query(User).filter_by(email=email).first()
     if user:
         return user.id
@@ -62,7 +72,7 @@ def get_user_id(email):
 
 
 def is_authenticated():
-    ''' Checks if token exist in session then Authenticate user '''
+    """ Checks if token exist in session then Authenticate user """
     if 'username' in login_session:
         return True
     return False
@@ -70,11 +80,11 @@ def is_authenticated():
 
 @app.route('/gconnect', methods=['POST'])
 def gconnect():
-    ''' Tries to connect with Google to authenticate valid user
+    """ Tries to connect with Google to authenticate valid user
         Allow application login through Google account
         Make application login on successful login of google user
         Returns to Catalog home screen
-    '''
+    """
     try:
         # Check if the POST request is trying to log in
         if 'idtoken' in request.form:
@@ -129,7 +139,7 @@ def gconnect():
 
 @app.route("/gdisconnect")
 def logout():
-    ''' Logging out only from this application and not from the google '''
+    """ Logging out only from this application and not from the google """
     del login_session['user_id']
     del login_session['google_id']
     del login_session['idtoken']
@@ -141,9 +151,9 @@ def logout():
 
 
 def category_exists(category_name):
-    ''' Checks if category exist
+    """ Checks if category exist
         return list with boolean value and category object if exist
-    '''
+    """
     category = SESSION.query(Category).filter_by(name=category_name).first()
     if category is None:
         return [False]
@@ -151,9 +161,9 @@ def category_exists(category_name):
 
 
 def product_exists(product_name):
-    ''' Checks if product exist
+    """ Checks if product exist
         return list with boolean value and product object if exist
-    '''
+    """
     product = SESSION.query(ProductItem).filter_by(name=product_name).first()
     if product is None:
         return [False]
@@ -163,7 +173,7 @@ def product_exists(product_name):
 @app.route('/')
 @app.route('/catalog/')
 def show_catalog():
-    ''' Return all Categories '''
+    """ Return all Categories """
     categories = SESSION.query(Category).order_by(asc(Category.name))
     products = SESSION.query(ProductItem).order_by(asc(ProductItem.name))
     return render_template('catalog.html', categories=categories,
@@ -173,7 +183,7 @@ def show_catalog():
 
 @app.route('/catalog/<category_name>/items')
 def explore_category(category_name):
-    ''' Return all products which belongs to given category '''
+    """ Return all products which belongs to given category """
     categories = SESSION.query(Category).order_by(asc(Category.name))
     category = SESSION.query(Category).filter_by(name=category_name).one()
     products_query = SESSION.query(
@@ -188,7 +198,7 @@ def explore_category(category_name):
 
 @app.route('/catalog/<category_name>/<product_name>')
 def explore_product(category_name, product_name):
-    ''' Returns product detail '''
+    """ Returns product detail """
     categories = SESSION.query(Category).order_by(asc(Category.name))
     product = SESSION.query(
         ProductItem).filter_by(name=product_name).one()
@@ -200,9 +210,9 @@ def explore_product(category_name, product_name):
 
 @app.route('/catalog/category/new/', methods=['GET', 'POST'])
 def new_category():
-    ''' Create new category
+    """ Create new category
         only allows to registered user
-    '''
+    """
     if not is_authenticated():
         return redirect('/login') # if not logged in, redirect to login screen
 
@@ -229,9 +239,9 @@ def new_category():
 
 @app.route('/catalog/product/new/', methods=['GET', 'POST'])
 def new_product():
-    ''' Create new product
+    """ Create new product
         only allows to registered user
-    '''
+    """
     if not is_authenticated():
         return redirect('/login') # if not logged in, redirect to login screen
     categories = SESSION.query(Category).order_by(asc(Category.name))
@@ -262,9 +272,9 @@ def new_product():
 
 @app.route('/catalog/<product_name>/edit/', methods=['GET', 'POST'])
 def edit_product(product_name):
-    ''' Updates product detail
+    """ Updates product detail
         only allows related user
-    '''
+    """
     if not is_authenticated():
         return redirect('/login') # if not logged in, redirect to login screen
     categories = SESSION.query(Category).order_by(asc(Category.name))
@@ -341,9 +351,9 @@ def edit_product(product_name):
 @app.route('/catalog/<product_name>/delete/',
            methods=['GET', 'POST'])
 def delete_product(product_name):
-    ''' Deletes Product permananetly
+    """ Deletes Product permananetly
         only allows related user
-    '''
+    """
     if  not is_authenticated():
         return redirect('/login') # if not logged in, redirect to login screen
     product = SESSION.query(
@@ -376,7 +386,7 @@ def delete_product(product_name):
 
 @app.route('/api/v1/catalog.json')
 def catalog_json():
-    ''' Returns json endpoint for all items with all categories '''
+    """ Returns json endpoint for all items with all categories """
     categories = SESSION.query(Category).all()
     category_list = []
 
@@ -393,7 +403,7 @@ def catalog_json():
 
 @app.route('/api/v1/catalog/<category_name>/items.json')
 def category_items_json(category_name):
-    ''' Returns json endpoint for all items with specified category '''
+    """ Returns json endpoint for all items with specified category """
     valid_category = category_exists(category_name)
     if valid_category[0]:
         products = SESSION.query(ProductItem).filter_by(
@@ -404,7 +414,7 @@ def category_items_json(category_name):
 
 @app.route('/api/v1/catalog/<category_name>/<product_name>/json')
 def category_product_json(category_name, product_name):
-    ''' Returns json endpoint with specified category and Product '''
+    """ Returns json endpoint with specified category and Product """
     valid_category = category_exists(category_name)
     valid_product = product_exists(product_name)
     if valid_category[0]:
