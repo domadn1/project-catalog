@@ -260,7 +260,7 @@ def new_product():
             category_id=request.form['category_name'], price=request.form['price'],
             user_id=login_session['user_id'])
         SESSION.add(newproduct)
-        flash('New Category %s Successfully Created' % newproduct.name)
+        flash('New Product %s Successfully Created' % newproduct.name)
         SESSION.commit()
         # Returns to catalog screen on successful creation of category
         return redirect(url_for('show_catalog'))
